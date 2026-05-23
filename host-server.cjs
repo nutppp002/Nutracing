@@ -61,7 +61,12 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 // Handle React Router
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  try {
+    const html = fs.readFileSync(path.join(__dirname, 'dist', 'index.html'), 'utf8');
+    res.send(html);
+  } catch (err) {
+    res.status(404).send('Not Found');
+  }
 });
 
 // Start the server

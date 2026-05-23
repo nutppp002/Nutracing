@@ -3,9 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "bin": "host-server.cjs",
   "pkg": {
     "scripts": "host-server.cjs",
-    "assets": "dist/**/*"
+    "assets": [
+      "dist/**/*"
+    ]
   },
   "scripts": {
     "dev": "vite",
