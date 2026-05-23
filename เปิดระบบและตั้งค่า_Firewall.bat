@@ -5,7 +5,7 @@ echo ============================================================
 echo   MotoFix Setup - Firewall Configuration for Host Machine
 echo ============================================================
 echo.
-echo ขอสิทธิ์ Administrator เพื่อตั้งค่าเปิด Port 80
+echo ขอสิทธิ์ Administrator เพื่อตั้งค่าเปิด Port 3000
 echo.
 
 :: Check for administrative rights
@@ -19,9 +19,9 @@ if %errorLevel% == 0 (
     exit /b 1
 )
 
-:: Add Firewall rule for port 80
-echo กำลังเพิ่มกฎ Firewall สำหรับ MotoFix (Port 80)...
-netsh advfirewall firewall add rule name="MotoFix Host (Port 80)" dir=in action=allow protocol=TCP localport=80 >nul 2>&1
+:: Add Firewall rule for port 3000
+echo กำลังเพิ่มกฎ Firewall สำหรับ MotoFix (Port 3000)...
+netsh advfirewall firewall add rule name="MotoFix Host (Port 3000)" dir=in action=allow protocol=TCP localport=3000 >nul 2>&1
 
 if %errorLevel% == 0 (
     echo [OK] ตั้งค่า Firewall สำเร็จ! เครื่องอื่นสามารถเชื่อมต่อได้แล้ว

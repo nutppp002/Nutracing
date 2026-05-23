@@ -10,4 +10,7 @@ echo (Do not close this window while using the system)
 echo.
 
 cd /d "%~dp0"
-call npm run preview
+echo กำลังเริ่มระบบ MotoFix Host...
+start MotoFixHost.exe
+echo ระบบเปิดใช้งานแล้ว
+pause

@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 3000;
 
 // Path to store data locally alongside the executable
 const dataFilePath = path.join(process.cwd(), 'motofix_data.json');
