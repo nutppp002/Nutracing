@@ -67,7 +67,6 @@ export function AuthProvider({ children }) {
 
   const canAccess = (path) => {
     if (!currentUser) return false;
-    if (path === '/settings' && currentUser.role === 'admin') return true;
     const perm = menuPermissions[path];
     if (!perm) return true;
     return perm[currentUser.role] === true;

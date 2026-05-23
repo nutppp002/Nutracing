@@ -229,7 +229,7 @@ const UserManagement = () => {
 };
 
 const MenuPermissionsManagement = () => {
-  const { menuPermissions, setMenuPermissions } = useAuth();
+  const { menuPermissions, setMenuPermissions, currentUser } = useAuth();
   const [localPermissions, setLocalPermissions] = useState(menuPermissions);
   const [savedMessage, setSavedMessage] = useState(false);
 
@@ -251,6 +251,13 @@ const MenuPermissionsManagement = () => {
 
   const handleSave = (e) => {
     e.preventDefault();
+    
+    // Check if the current user is disabling their own access to settings page
+    if (localPermissions['/settings'] && localPermissions['/settings'][currentUser.role] === false) {
+      alert('ไม่สามารถปิดสิทธิ์การเข้าถึง "ตั้งค่าระบบ" สำหรับระดับสิทธิ์ของคุณเองได้ เพื่อป้องกันไม่ให้ถูกล็อกออกจากระบบ');
+      return;
+    }
+
     setMenuPermissions(localPermissions);
     setSavedMessage(true);
     setTimeout(() => setSavedMessage(false), 3000);
@@ -289,12 +296,11 @@ const MenuPermissionsManagement = () => {
                     <input 
                       type="checkbox" 
                       checked={perm.admin} 
-                      disabled={path === '/settings'} 
                       onChange={(e) => handleCheckboxChange(path, 'admin', e.target.checked)}
                       style={{ 
                         width: '18px', 
                         height: '18px', 
-                        cursor: path === '/settings' ? 'not-allowed' : 'pointer',
+                        cursor: 'pointer',
                         accentColor: 'var(--primary)'
                       }}
                     />
