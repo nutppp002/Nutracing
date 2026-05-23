@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Header } from '../components/Header';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Save, Store, MapPin, Phone, FileText, Palette } from 'lucide-react';
+import { Save, Store, MapPin, Phone, FileText, Palette, Users as UsersIcon } from 'lucide-react';
 
 const defaultSettings = {
   storeName: 'MotoFix',
@@ -100,6 +100,126 @@ export const Settings = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      <UserManagement />
+
+    </div>
+  );
+};
+
+const UserManagement = () => {
+  const { users, setUsers, currentUser } = require('../contexts/AuthContext').useAuth();
+  const [isEditing, setIsEditing] = useState(null);
+  const [formData, setFormData] = useState({ username: '', password: '', role: 'user', name: '' });
+
+  const handleEdit = (user) => {
+    setFormData(user);
+    setIsEditing(user.username);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (isEditing === 'new') {
+      if (users.find(u => u.username === formData.username)) {
+        alert('ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว');
+        return;
+      }
+      setUsers([...users, formData]);
+    } else {
+      setUsers(users.map(u => u.username === isEditing ? formData : u));
+    }
+    setIsEditing(null);
+  };
+
+  const handleDelete = (username) => {
+    if (username === currentUser.username) {
+      alert('ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้');
+      return;
+    }
+    if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชี ${username}?`)) {
+      setUsers(users.filter(u => u.username !== username));
+    }
+  };
+
+  return (
+    <div className="glass-panel" style={{ maxWidth: '800px', margin: '2rem auto 0', padding: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+          <UsersIcon size={24} color="var(--primary)" /> 
+          จัดการบัญชีผู้ใช้งาน
+        </h2>
+        <button className="btn btn-primary" onClick={() => { setFormData({ username: '', password: '', role: 'user', name: '' }); setIsEditing('new'); }}>
+          + เพิ่มผู้ใช้ใหม่
+        </button>
+      </div>
+
+      {isEditing && (
+        <form onSubmit={handleSave} style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div>
+              <label className="form-label">ชื่อผู้ใช้ (Username)</label>
+              <input type="text" className="form-control" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} disabled={isEditing !== 'new'} required />
+            </div>
+            <div>
+              <label className="form-label">รหัสผ่าน (Password)</label>
+              <input type="text" className="form-control" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} required />
+            </div>
+            <div>
+              <label className="form-label">ชื่อ-นามสกุล / ตำแหน่ง</label>
+              <input type="text" className="form-control" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
+            </div>
+            <div>
+              <label className="form-label">ระดับสิทธิ์ (Role)</label>
+              <select className="form-control" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                <option value="user">พนักงาน (User)</option>
+                <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+            <button type="button" className="btn btn-secondary" onClick={() => setIsEditing(null)}>ยกเลิก</button>
+            <button type="submit" className="btn btn-primary">บันทึกข้อมูล</button>
+          </div>
+        </form>
+      )}
+
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+              <th style={{ textAlign: 'left', padding: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>ชื่อผู้ใช้</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>รหัสผ่าน</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>ชื่อ-นามสกุล</th>
+              <th style={{ textAlign: 'left', padding: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>สิทธิ์</th>
+              <th style={{ textAlign: 'right', padding: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u.username} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                <td style={{ padding: '0.75rem' }}>{u.username}</td>
+                <td style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>{u.password}</td>
+                <td style={{ padding: '0.75rem' }}>{u.name}</td>
+                <td style={{ padding: '0.75rem' }}>
+                  <span style={{ 
+                    padding: '0.25rem 0.5rem', 
+                    borderRadius: '4px', 
+                    fontSize: '0.75rem', 
+                    background: u.role === 'admin' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                    color: u.role === 'admin' ? 'var(--primary)' : 'var(--success)'
+                  }}>
+                    {u.role === 'admin' ? 'Admin' : 'User'}
+                  </span>
+                </td>
+                <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                  <button onClick={() => handleEdit(u)} style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', marginRight: '1rem' }}>แก้ไข</button>
+                  <button onClick={() => handleDelete(u.username)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer' }} disabled={u.username === currentUser.username}>ลบ</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
