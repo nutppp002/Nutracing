@@ -1,8 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 
 export function useLocalStorage(key, initialValue) {
-  const [storedValue, setStoredValue] = useState(initialValue);
+  const readLocalFallback = () => {
+    try {
+      const item = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  };
+
+  const [storedValue, setStoredValue] = useState(readLocalFallback);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const isMounted = useRef(true);
 
   // Initialize and load data from the API
@@ -13,15 +23,24 @@ export function useLocalStorage(key, initialValue) {
       try {
         const response = await fetch(`/api/data/${key}`);
         if (response.ok) {
-          const data = await response.json();
-          if (data.value !== undefined) {
-            if (isMounted.current) {
-              setStoredValue(data.value);
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.indexOf("application/json") !== -1) {
+            const data = await response.json();
+            if (data.value !== undefined) {
+              if (isMounted.current) {
+                setStoredValue(data.value);
+                setUseFallback(false);
+              }
+              return;
             }
           }
         }
+        throw new Error("API not available, falling back to local storage");
       } catch (error) {
-        console.error(`Error fetching ${key} from server:`, error);
+        if (isMounted.current) {
+          setUseFallback(true);
+          setStoredValue(readLocalFallback());
+        }
       } finally {
         if (isMounted.current) {
           setIsLoaded(true);
@@ -38,55 +57,67 @@ export function useLocalStorage(key, initialValue) {
 
   const setValue = async (value) => {
     try {
-      // Allow value to be a function so we have same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value;
-      
-      // Update local state immediately for fast UI response
       setStoredValue(valueToStore);
       
-      // Save to server
+      if (useFallback) {
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        }
+        return;
+      }
+      
       const response = await fetch(`/api/data/${key}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value: valueToStore })
       });
       
       if (!response.ok) {
-        console.error(`Failed to save ${key} to server`);
+        setUseFallback(true);
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        }
       }
     } catch (error) {
-      console.warn(`Error setting key "${key}":`, error);
+      setUseFallback(true);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(value instanceof Function ? value(storedValue) : value));
+      }
     }
   };
 
-  // Polling to sync state across different machines
+  // Polling to sync state across different machines or sync across tabs
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/data/${key}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.value !== undefined) {
-            if (isMounted.current) {
-              setStoredValue(prev => {
-                // Only update if changed to avoid unnecessary re-renders
-                if (JSON.stringify(prev) !== JSON.stringify(data.value)) {
-                  return data.value;
-                }
-                return prev;
-              });
+    if (useFallback) {
+      const handleStorageChange = () => setStoredValue(readLocalFallback());
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    } else {
+      const interval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/data/${key}`);
+          if (response.ok) {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+              const data = await response.json();
+              if (data.value !== undefined && isMounted.current) {
+                setStoredValue(prev => {
+                  if (JSON.stringify(prev) !== JSON.stringify(data.value)) {
+                    return data.value;
+                  }
+                  return prev;
+                });
+              }
             }
           }
+        } catch (error) {
+          // Ignore
         }
-      } catch (error) {
-        // Ignore polling errors to prevent console spam
-      }
-    }, 3000); // Poll every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [key]);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [key, useFallback]);
 
   return [storedValue, setValue, isLoaded];
 }
