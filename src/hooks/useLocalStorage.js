@@ -114,7 +114,7 @@ export function useLocalStorage(key, initialValue) {
         } catch (error) {
           // Ignore
         }
-      }, 3000);
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [key, useFallback]);
