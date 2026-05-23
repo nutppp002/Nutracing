@@ -1,49 +1,92 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function useLocalStorage(key, initialValue) {
-  // Get from local storage then parse stored json or return initialValue
-  const readValue = () => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
+  const [storedValue, setStoredValue] = useState(initialValue);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const isMounted = useRef(true);
 
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
-    }
-  };
+  // Initialize and load data from the API
+  useEffect(() => {
+    isMounted.current = true;
+    
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/api/data/${key}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value !== undefined) {
+            if (isMounted.current) {
+              setStoredValue(data.value);
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching ${key} from server:`, error);
+      } finally {
+        if (isMounted.current) {
+          setIsLoaded(true);
+        }
+      }
+    };
 
-  const [storedValue, setStoredValue] = useState(readValue);
+    fetchData();
 
-  // Return a wrapped version of useState's setter function that persists the new value to localStorage.
-  const setValue = value => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, [key]);
+
+  const setValue = async (value) => {
     try {
       // Allow value to be a function so we have same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       
+      // Update local state immediately for fast UI response
       setStoredValue(valueToStore);
       
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      // Save to server
+      const response = await fetch(`/api/data/${key}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: valueToStore })
+      });
+      
+      if (!response.ok) {
+        console.error(`Failed to save ${key} to server`);
       }
     } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
+      console.warn(`Error setting key "${key}":`, error);
     }
   };
 
-  // Sync state across tabs/windows
+  // Polling to sync state across different machines
   useEffect(() => {
-    const handleStorageChange = () => {
-      setStoredValue(readValue());
-    };
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/data/${key}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value !== undefined) {
+            if (isMounted.current) {
+              setStoredValue(prev => {
+                // Only update if changed to avoid unnecessary re-renders
+                if (JSON.stringify(prev) !== JSON.stringify(data.value)) {
+                  return data.value;
+                }
+                return prev;
+              });
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore polling errors to prevent console spam
+      }
+    }, 3000); // Poll every 3 seconds
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => clearInterval(interval);
   }, [key]);
 
-  return [storedValue, setValue];
+  return [storedValue, setValue, isLoaded];
 }
