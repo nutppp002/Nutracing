@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '../components/Header';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Save, Store, MapPin, Phone, FileText, Palette, Users as UsersIcon } from 'lucide-react';
+import { Save, Store, MapPin, Phone, FileText, Palette, Users as UsersIcon, Shield } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const defaultSettings = {
   storeName: 'MotoFix',
@@ -104,12 +105,14 @@ export const Settings = () => {
 
       <UserManagement />
 
+      <MenuPermissionsManagement />
+
     </div>
   );
 };
 
 const UserManagement = () => {
-  const { users, setUsers, currentUser } = require('../contexts/AuthContext').useAuth();
+  const { users, setUsers, currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(null);
   const [formData, setFormData] = useState({ username: '', password: '', role: 'user', name: '' });
 
@@ -221,6 +224,107 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+};
+
+const MenuPermissionsManagement = () => {
+  const { menuPermissions, setMenuPermissions } = useAuth();
+  const [localPermissions, setLocalPermissions] = useState(menuPermissions);
+  const [savedMessage, setSavedMessage] = useState(false);
+
+  useEffect(() => {
+    if (menuPermissions) {
+      setLocalPermissions(menuPermissions);
+    }
+  }, [menuPermissions]);
+
+  const handleCheckboxChange = (path, role, checked) => {
+    setLocalPermissions(prev => ({
+      ...prev,
+      [path]: {
+        ...prev[path],
+        [role]: checked
+      }
+    }));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    setMenuPermissions(localPermissions);
+    setSavedMessage(true);
+    setTimeout(() => setSavedMessage(false), 3000);
+  };
+
+  if (!localPermissions) return null;
+
+  return (
+    <div className="glass-panel" style={{ maxWidth: '800px', margin: '2rem auto 0', padding: '2rem' }}>
+      <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Shield size={24} color="var(--primary)" /> 
+        ตั้งค่าสิทธิ์การเข้าถึงเมนู
+      </h2>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+        กำหนดสิทธิ์การมองเห็นและการเข้าใช้งานเมนูต่างๆ ของผู้ใช้ระบบในแต่ละระดับสิทธิ์ (Admin และ Staff)
+      </p>
+
+      <form onSubmit={handleSave}>
+        <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                <th style={{ textAlign: 'left', padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: '500' }}>ชื่อเมนู</th>
+                <th style={{ textAlign: 'center', padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: '500' }}>ผู้ดูแลระบบ (Admin)</th>
+                <th style={{ textAlign: 'center', padding: '0.75rem 0.5rem', color: 'var(--text-muted)', fontWeight: '500' }}>พนักงาน (Staff)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(localPermissions).map(([path, perm]) => (
+                <tr key={path} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                  <td style={{ padding: '0.75rem 0.5rem' }}>
+                    <div style={{ fontWeight: '500' }}>{perm.label}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{path}</div>
+                  </td>
+                  <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={perm.admin} 
+                      disabled={path === '/settings'} 
+                      onChange={(e) => handleCheckboxChange(path, 'admin', e.target.checked)}
+                      style={{ 
+                        width: '18px', 
+                        height: '18px', 
+                        cursor: path === '/settings' ? 'not-allowed' : 'pointer',
+                        accentColor: 'var(--primary)'
+                      }}
+                    />
+                  </td>
+                  <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={perm.user} 
+                      onChange={(e) => handleCheckboxChange(path, 'user', e.target.checked)}
+                      style={{ 
+                        width: '18px', 
+                        height: '18px', 
+                        cursor: 'pointer',
+                        accentColor: 'var(--primary)'
+                      }}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1.5rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
+          {savedMessage && <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>บันทึกสิทธิ์การใช้งานเรียบร้อยแล้ว</span>}
+          <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 2rem' }}>
+            <Save size={18} /> บันทึกสิทธิ์การใช้งาน
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

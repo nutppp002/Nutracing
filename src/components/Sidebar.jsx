@@ -6,16 +6,16 @@ import { useAuth } from '../contexts/AuthContext';
 export const Sidebar = () => {
   const location = useLocation();
   const [settings] = useLocalStorage('motofix_settings', { storeName: 'MotoFix' });
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, canAccess } = useAuth();
   
   const navItems = [
-    { name: 'แดชบอร์ด', path: '/', icon: <LayoutDashboard size={20} />, roles: ['admin', 'user'] },
-    { name: 'จัดการงานซ่อม', path: '/jobs', icon: <Wrench size={20} />, roles: ['admin', 'user'] },
-    { name: 'จัดการลูกค้าและรถ', path: '/customers', icon: <Users size={20} />, roles: ['admin', 'user'] },
-    { name: 'คลังอะไหล่', path: '/inventory', icon: <Box size={20} />, roles: ['admin', 'user'] },
-    { name: 'ระบบคิดเงิน', path: '/billing', icon: <FileText size={20} />, roles: ['admin'] },
-    { name: 'ตั้งค่าระบบ', path: '/settings', icon: <Settings size={20} />, roles: ['admin'] },
-  ].filter(item => item.roles.includes(currentUser?.role));
+    { name: 'แดชบอร์ด', path: '/', icon: <LayoutDashboard size={20} /> },
+    { name: 'จัดการงานซ่อม', path: '/jobs', icon: <Wrench size={20} /> },
+    { name: 'จัดการลูกค้าและรถ', path: '/customers', icon: <Users size={20} /> },
+    { name: 'คลังอะไหล่', path: '/inventory', icon: <Box size={20} /> },
+    { name: 'ระบบคิดเงิน', path: '/billing', icon: <FileText size={20} /> },
+    { name: 'ตั้งค่าระบบ', path: '/settings', icon: <Settings size={20} /> },
+  ].filter(item => canAccess(item.path));
 
   return (
     <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>

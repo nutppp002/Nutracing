@@ -17,13 +17,13 @@ import { Billing } from './pages/Billing';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { currentUser } = useAuth();
+const ProtectedRoute = ({ children, path }) => {
+  const { currentUser, canAccess } = useAuth();
   
   if (!currentUser) return <Navigate to="/login" replace />;
   
-  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
-    return <Navigate to="/" replace />; // Redirect to dashboard if not allowed
+  if (path && !canAccess(path)) {
+    return <Navigate to="/" replace />;
   }
   
   return children;
@@ -56,15 +56,12 @@ const AppContent = () => {
         <Routes>
           <Route path="/login" element={<Navigate to="/" replace />} />
           
-          {/* Accessible by everyone */}
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
-          <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-          <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-          
-          {/* Accessible by admin only */}
-          <Route path="/billing" element={<ProtectedRoute allowedRoles={['admin']}><Billing /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><Settings /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute path="/"><Dashboard /></ProtectedRoute>} />
+          <Route path="/jobs" element={<ProtectedRoute path="/jobs"><Jobs /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute path="/customers"><Customers /></ProtectedRoute>} />
+          <Route path="/inventory" element={<ProtectedRoute path="/inventory"><Inventory /></ProtectedRoute>} />
+          <Route path="/billing" element={<ProtectedRoute path="/billing"><Billing /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute path="/settings"><Settings /></ProtectedRoute>} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
