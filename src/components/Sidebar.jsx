@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Wrench, Users, Box, FileText, Settings } from 'lucide-react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export const Sidebar = () => {
   const location = useLocation();
+  const [settings] = useLocalStorage('motofix_settings', { storeName: 'MotoFix' });
   const navItems = [
     { name: 'แดชบอร์ด', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'จัดการงานซ่อม', path: '/jobs', icon: <Wrench size={20} /> },
@@ -19,7 +21,7 @@ export const Sidebar = () => {
           <Wrench size={24} color="white" />
         </div>
         <div>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: 0 }}>MotoFix</h2>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: 0 }}>{settings?.storeName || 'MotoFix'}</h2>
           <p style={{ fontSize: '0.75rem', marginBottom: 0, color: 'var(--primary)' }}>ระบบจัดการร้าน</p>
         </div>
       </div>

@@ -16,8 +16,19 @@ import { Customers } from './pages/Customers';
 import { Billing } from './pages/Billing';
 import { Settings } from './pages/Settings';
 
+import { useEffect } from 'react';
+import { useLocalStorage } from './hooks/useLocalStorage';
 
 function App() {
+  const [settings] = useLocalStorage('motofix_settings', { themeColor: '#6366f1' });
+
+  useEffect(() => {
+    if (settings?.themeColor) {
+      document.documentElement.style.setProperty('--primary', settings.themeColor);
+      document.documentElement.style.setProperty('--primary-hover', `color-mix(in srgb, ${settings.themeColor}, black 15%)`);
+    }
+  }, [settings?.themeColor]);
+
   return (
     <Router>
       <div className="app-container">

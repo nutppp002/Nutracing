@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Header } from '../components/Header';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Save, Store, MapPin, Phone, FileText } from 'lucide-react';
+import { Save, Store, MapPin, Phone, FileText, Palette } from 'lucide-react';
 
 const defaultSettings = {
   storeName: 'MotoFix',
@@ -9,6 +9,7 @@ const defaultSettings = {
   phone: '02-123-4567, 089-999-8888',
   taxId: '0105555555555',
   invoicePrefix: 'INV-',
+  themeColor: '#6366f1',
 };
 
 export const Settings = () => {
@@ -71,11 +72,23 @@ export const Settings = () => {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                คำนำหน้าเลขใบเสร็จ (เช่น INV-)
-              </label>
-              <input type="text" name="invoicePrefix" value={formData.invoicePrefix} onChange={handleChange} className="form-control" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  คำนำหน้าเลขใบเสร็จ (เช่น INV-)
+                </label>
+                <input type="text" name="invoicePrefix" value={formData.invoicePrefix} onChange={handleChange} className="form-control" />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Palette size={16} /> สีหลักของระบบ (Theme Color)
+                </label>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <input type="color" name="themeColor" value={formData.themeColor || '#6366f1'} onChange={handleChange} style={{ width: '50px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }} />
+                  <span style={{ color: 'var(--text-muted)' }}>เลือกสีที่คุณต้องการ</span>
+                </div>
+              </div>
             </div>
 
           </div>
