@@ -60,7 +60,7 @@ app.post('/api/data/:key', (req, res) => {
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Handle React Router
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
