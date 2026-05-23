@@ -26,13 +26,13 @@ export function useLocalStorage(key, initialValue) {
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.indexOf("application/json") !== -1) {
             const data = await response.json();
-            if (data.value !== undefined) {
-              if (isMounted.current) {
+            if (isMounted.current) {
+              if (data.value !== undefined) {
                 setStoredValue(data.value);
-                setUseFallback(false);
               }
-              return;
+              setUseFallback(false);
             }
+            return;
           }
         }
         throw new Error("API not available, falling back to local storage");
