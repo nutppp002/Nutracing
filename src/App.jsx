@@ -1,5 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
+import { useEffect } from 'react';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Layout
 import { Sidebar } from './components/Sidebar';
@@ -10,16 +13,24 @@ import { Dashboard } from './pages/Dashboard';
 import { Jobs } from './pages/Jobs';
 import { Inventory } from './pages/Inventory';
 import { Customers } from './pages/Customers';
-
-// Dummy Pages (to be implemented)
-
 import { Billing } from './pages/Billing';
 import { Settings } from './pages/Settings';
+import { Login } from './pages/Login';
 
-import { useEffect } from 'react';
-import { useLocalStorage } from './hooks/useLocalStorage';
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { currentUser } = useAuth();
+  
+  if (!currentUser) return <Navigate to="/login" replace />;
+  
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
+    return <Navigate to="/" replace />; // Redirect to dashboard if not allowed
+  }
+  
+  return children;
+};
 
-function App() {
+const AppContent = () => {
+  const { currentUser } = useAuth();
   const [settings] = useLocalStorage('motofix_settings', { themeColor: '#6366f1' });
 
   useEffect(() => {
@@ -29,22 +40,46 @@ function App() {
     }
   }, [settings?.themeColor]);
 
+  if (!currentUser) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
   return (
-    <Router>
-      <div className="app-container">
-        <Sidebar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+    <div className="app-container">
+      <Sidebar />
+      <main className="main-content">
+        <Routes>
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          
+          {/* Accessible by everyone */}
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/jobs" element={<ProtectedRoute><Jobs /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+          <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+          
+          {/* Accessible by admin only */}
+          <Route path="/billing" element={<ProtectedRoute allowedRoles={['admin']}><Billing /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><Settings /></ProtectedRoute>} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 
