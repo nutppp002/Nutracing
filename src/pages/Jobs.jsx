@@ -12,6 +12,17 @@ export const Jobs = () => {
 
   const [modalMode, setModalMode] = useState(null); // 'add', 'edit', 'view', null
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const filtered = jobs.filter(job => {
+    const matchSearch = job.id.includes(search) || job.customer.includes(search) || job.licensePlate.includes(search) || job.vehicleModel.includes(search);
+    let matchDate = true;
+    if (startDate) matchDate = matchDate && job.date >= startDate;
+    if (endDate) matchDate = matchDate && job.date <= endDate;
+    return matchSearch && matchDate;
+  });
   
   const initialFormState = {
     customer: '',
@@ -97,14 +108,27 @@ export const Jobs = () => {
       <Header title="จัดการงานซ่อม" />
       
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', flex: 1, maxWidth: '400px' }}>
-            <div style={{ position: 'relative', width: '100%' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: 1, alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
               <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input type="text" className="form-control" placeholder="ค้นหาจากรหัสงาน, ป้ายทะเบียน..." style={{ paddingLeft: '2.5rem' }} />
+              <input type="text" className="form-control" placeholder="ค้นหาจากรหัสงาน, ลูกค้า, ป้ายทะเบียน..." style={{ paddingLeft: '2.5rem' }} value={search} onChange={e => setSearch(e.target.value)} />
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>ตั้งแต่:</span>
+              <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '140px' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>ถึง:</span>
+              <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '140px' }} />
+            </div>
+            {(startDate || endDate || search) && (
+              <button className="btn btn-secondary" onClick={() => { setSearch(''); setStartDate(''); setEndDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}>
+                ล้างตัวกรอง
+              </button>
+            )}
           </div>
-          <button className="btn btn-primary" onClick={() => openModal('add')}>
+          <button className="btn btn-primary" onClick={() => openModal('add')} style={{ flexShrink: 0 }}>
             <Plus size={18} /> เพิ่มงานซ่อมใหม่
           </button>
         </div>
@@ -123,7 +147,7 @@ export const Jobs = () => {
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
+              {filtered.map((job) => (
                 <tr key={job.id}>
                   <td style={{ fontWeight: '500', color: 'var(--primary)' }}>{job.id}</td>
                   <td>{job.date}</td>
@@ -146,6 +170,13 @@ export const Jobs = () => {
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                    ไม่พบข้อมูลงานซ่อมที่ตรงกับเงื่อนไข
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
