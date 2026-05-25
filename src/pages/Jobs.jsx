@@ -15,13 +15,15 @@ export const Jobs = () => {
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const filtered = jobs.filter(job => {
     const matchSearch = job.id.includes(search) || job.customer.includes(search) || job.licensePlate.includes(search) || job.vehicleModel.includes(search);
     let matchDate = true;
     if (startDate) matchDate = matchDate && job.date >= startDate;
     if (endDate) matchDate = matchDate && job.date <= endDate;
-    return matchSearch && matchDate;
+    const matchStatus = statusFilter === '' || job.status === statusFilter;
+    return matchSearch && matchDate && matchStatus;
   });
   
   const initialFormState = {
@@ -115,6 +117,16 @@ export const Jobs = () => {
               <input type="text" className="form-control" placeholder="ค้นหาจากรหัสงาน, ลูกค้า, ป้ายทะเบียน..." style={{ paddingLeft: '2.5rem' }} value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>สถานะ:</span>
+              <select className="form-control" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ width: '130px' }}>
+                <option value="">ทั้งหมด</option>
+                <option value="รอดำเนินการ">รอดำเนินการ</option>
+                <option value="กำลังซ่อม">กำลังซ่อม</option>
+                <option value="รออะไหล่">รออะไหล่</option>
+                <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>ตั้งแต่:</span>
               <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '140px' }} />
             </div>
@@ -122,8 +134,8 @@ export const Jobs = () => {
               <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>ถึง:</span>
               <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '140px' }} />
             </div>
-            {(startDate || endDate || search) && (
-              <button className="btn btn-secondary" onClick={() => { setSearch(''); setStartDate(''); setEndDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}>
+            {(startDate || endDate || search || statusFilter) && (
+              <button className="btn btn-secondary" onClick={() => { setSearch(''); setStartDate(''); setEndDate(''); setStatusFilter(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}>
                 ล้างตัวกรอง
               </button>
             )}
