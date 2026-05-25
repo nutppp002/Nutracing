@@ -1,0 +1,140 @@
+{
+  "motofix_jobs": [
+    {
+      "id": "JOB-001",
+      "customer": "สมชาย",
+      "phone": "081-234-5678",
+      "vehicleModel": "Honda Wave 110i",
+      "licensePlate": "1กข 1234",
+      "issue": "ถ่ายน้ำมันเครื่อง, เช็คเบรก",
+      "estimatedPrice": "500",
+      "status": "เสร็จสิ้น",
+      "date": "2026-05-23"
+    },
+    {
+      "id": "JOB-002",
+      "customer": "สมศรี",
+      "phone": "089-876-5432",
+      "vehicleModel": "Yamaha Fino",
+      "licensePlate": "2ขค 5678",
+      "issue": "สตาร์ทไม่ติด",
+      "estimatedPrice": "",
+      "status": "กำลังซ่อม",
+      "date": "2026-05-23"
+    },
+    {
+      "id": "JOB-003",
+      "customer": "มานะ",
+      "phone": "085-555-1234",
+      "vehicleModel": "Honda PCX 150",
+      "licensePlate": "3คง 9012",
+      "issue": "เปลี่ยนยางหลัง",
+      "estimatedPrice": "1200",
+      "status": "รอดำเนินการ",
+      "date": "2026-05-23"
+    }
+  ],
+  "motofix_invoices": [
+    {
+      "id": "INV-2026-001",
+      "jobId": "JOB-001",
+      "customer": "สมชาย ใจดี",
+      "phone": "081-234-5678",
+      "vehicleModel": "Honda Wave 110i",
+      "licensePlate": "1กข 1234",
+      "date": "2026-05-23",
+      "items": [
+        {
+          "description": "ค่าแรง - ถ่ายน้ำมันเครื่อง",
+          "qty": 1,
+          "unit": "งาน",
+          "unitPrice": 100
+        },
+        {
+          "description": "น้ำมันเครื่อง Castrol 4T 10W-40",
+          "qty": 1,
+          "unit": "ลิตร",
+          "unitPrice": 120
+        },
+        {
+          "description": "ค่าแรง - เช็คเบรก",
+          "qty": 1,
+          "unit": "งาน",
+          "unitPrice": 80
+        },
+        {
+          "description": "ผ้าเบรกหน้า Honda Wave",
+          "qty": 1,
+          "unit": "ชุด",
+          "unitPrice": 250
+        }
+      ],
+      "status": "ชำระแล้ว",
+      "paymentMethod": "เงินสด"
+    },
+    {
+      "id": "INV-2026-002",
+      "jobId": "JOB-003",
+      "customer": "มานะ ขยันดี",
+      "phone": "085-555-1234",
+      "vehicleModel": "Honda PCX 150",
+      "licensePlate": "3คง 9012",
+      "date": "2026-05-23",
+      "items": [
+        {
+          "description": "ค่าแรง - เปลี่ยนยางหลัง",
+          "qty": 1,
+          "unit": "งาน",
+          "unitPrice": 150
+        },
+        {
+          "description": "ยางนอกหลัง IRC 80/90-17",
+          "qty": 1,
+          "unit": "เส้น",
+          "unitPrice": 750
+        },
+        {
+          "description": "ยางใน",
+          "qty": 1,
+          "unit": "เส้น",
+          "unitPrice": 80
+        }
+      ],
+      "status": "ชำระแล้ว",
+      "paymentMethod": ""
+    }
+  ],
+  "motofix_menu_permissions": {
+    "/": {
+      "admin": true,
+      "user": true,
+      "label": "แดชบอร์ด"
+    },
+    "/jobs": {
+      "admin": true,
+      "user": true,
+      "label": "จัดการงานซ่อม"
+    },
+    "/customers": {
+      "admin": true,
+      "user": true,
+      "label": "จัดการลูกค้าและรถ"
+    },
+    "/inventory": {
+      "admin": true,
+      "user": false,
+      "label": "คลังอะไหล่"
+    },
+    "/billing": {
+      "admin": true,
+      "user": false,
+      "label": "ระบบคิดเงิน"
+    },
+    "/settings": {
+      "admin": true,
+      "user": false,
+      "label": "ตั้งค่าระบบ"
+    }
+  },
+  "motofix_customers": []
+}

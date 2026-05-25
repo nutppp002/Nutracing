@@ -254,6 +254,11 @@ p {
   animation: fadeIn 0.4s ease forwards;
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .table-container {
   width: 100%;
   overflow-x: auto;

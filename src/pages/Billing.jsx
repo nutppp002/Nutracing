@@ -63,13 +63,19 @@ export const Billing = () => {
     invoicePrefix: 'INV-',
   });
   const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [modalMode, setModalMode] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [formData, setFormData] = useState(initialForm);
 
-  const filtered = invoices.filter(inv =>
-    inv.id.includes(search) || inv.customer.includes(search) || inv.jobId.includes(search)
-  );
+  const filtered = invoices.filter(inv => {
+    const matchSearch = inv.id.includes(search) || inv.customer.includes(search) || inv.jobId.includes(search);
+    let matchDate = true;
+    if (startDate) matchDate = matchDate && inv.date >= startDate;
+    if (endDate) matchDate = matchDate && inv.date <= endDate;
+    return matchSearch && matchDate;
+  });
 
   const openModal = (mode, inv = null) => {
     setModalMode(mode);
@@ -136,8 +142,8 @@ export const Billing = () => {
     }
   };
 
-  const totalRevenue = invoices.filter(i => i.status === 'ชำระแล้ว').reduce((s, inv) => s + calcTotal(inv.items), 0);
-  const totalPending = invoices.filter(i => i.status === 'รอชำระ').reduce((s, inv) => s + calcTotal(inv.items), 0);
+  const totalRevenue = filtered.filter(i => i.status === 'ชำระแล้ว').reduce((s, inv) => s + calcTotal(inv.items), 0);
+  const totalPending = filtered.filter(i => i.status === 'รอชำระ').reduce((s, inv) => s + calcTotal(inv.items), 0);
 
   const isView = modalMode === 'view';
   const currentInvoice = isView ? invoices.find(i => i.id === selectedId) : null;
@@ -158,17 +164,32 @@ export const Billing = () => {
         </div>
         <div className="glass-panel" style={{ borderTop: '4px solid var(--primary)' }}>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>ใบเสร็จทั้งหมด</p>
-          <h2 style={{ fontSize: '1.75rem', marginBottom: 0 }}>{invoices.length} ใบ</h2>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: 0 }}>{filtered.length} ใบ</h2>
         </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input type="text" className="form-control" placeholder="ค้นหาเลขใบเสร็จ, ชื่อลูกค้า..." style={{ paddingLeft: '2.5rem' }} value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flex: 1, alignItems: 'center' }}>
+            <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input type="text" className="form-control" placeholder="ค้นหาเลขใบเสร็จ, ชื่อลูกค้า..." style={{ paddingLeft: '2.5rem' }} value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>ตั้งแต่:</span>
+              <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '140px' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>ถึง:</span>
+              <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '140px' }} />
+            </div>
+            {(startDate || endDate || search) && (
+              <button className="btn btn-secondary" onClick={() => { setSearch(''); setStartDate(''); setEndDate(''); }} style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}>
+                ล้างตัวกรอง
+              </button>
+            )}
           </div>
-          <button className="btn btn-primary" onClick={() => openModal('add')}>
+          <button className="btn btn-primary" onClick={() => openModal('add')} style={{ flexShrink: 0 }}>
             <Plus size={18} /> ออกใบเสร็จใหม่
           </button>
         </div>

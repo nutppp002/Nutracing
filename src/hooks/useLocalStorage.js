@@ -1,4 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+
+// Call this to trigger an immediate refresh of all useLocalStorage hooks
+export function triggerRefresh() {
+  window.dispatchEvent(new CustomEvent('motofix_refresh'));
+}
 
 export function useLocalStorage(key, initialValue) {
   const readLocalFallback = () => {
@@ -15,41 +20,44 @@ export function useLocalStorage(key, initialValue) {
   const [useFallback, setUseFallback] = useState(false);
   const isMounted = useRef(true);
 
+  const fetchFromApi = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/data/${key}`);
+      if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const data = await response.json();
+          if (isMounted.current) {
+            if (data.value !== undefined) {
+              setStoredValue(prev => {
+                if (JSON.stringify(prev) !== JSON.stringify(data.value)) {
+                  return data.value;
+                }
+                return prev;
+              });
+            }
+            setUseFallback(false);
+          }
+          return;
+        }
+      }
+      throw new Error("API not available, falling back to local storage");
+    } catch (error) {
+      if (isMounted.current) {
+        setUseFallback(true);
+        setStoredValue(readLocalFallback());
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoaded(true);
+      }
+    }
+  }, [key]);
+
   // Initialize and load data from the API
   useEffect(() => {
     isMounted.current = true;
-    
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`/api/data/${key}`);
-        if (response.ok) {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.indexOf("application/json") !== -1) {
-            const data = await response.json();
-            if (isMounted.current) {
-              if (data.value !== undefined) {
-                setStoredValue(data.value);
-              }
-              setUseFallback(false);
-            }
-            return;
-          }
-        }
-        throw new Error("API not available, falling back to local storage");
-      } catch (error) {
-        if (isMounted.current) {
-          setUseFallback(true);
-          setStoredValue(readLocalFallback());
-        }
-      } finally {
-        if (isMounted.current) {
-          setIsLoaded(true);
-        }
-      }
-    };
-
-    fetchData();
-
+    fetchFromApi();
     return () => {
       isMounted.current = false;
     };
@@ -87,13 +95,17 @@ export function useLocalStorage(key, initialValue) {
     }
   };
 
-  // Polling to sync state across different machines or sync across tabs
+  // Polling to sync state + listen for manual refresh event
   useEffect(() => {
     if (useFallback) {
       const handleStorageChange = () => setStoredValue(readLocalFallback());
       window.addEventListener('storage', handleStorageChange);
       return () => window.removeEventListener('storage', handleStorageChange);
     } else {
+      // Listen for manual refresh event
+      const handleManualRefresh = () => fetchFromApi();
+      window.addEventListener('motofix_refresh', handleManualRefresh);
+
       const interval = setInterval(async () => {
         try {
           const response = await fetch(`/api/data/${key}`);
@@ -115,7 +127,10 @@ export function useLocalStorage(key, initialValue) {
           // Ignore
         }
       }, 15000);
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('motofix_refresh', handleManualRefresh);
+      };
     }
   }, [key, useFallback]);
 
